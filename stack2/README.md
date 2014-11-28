@@ -7,11 +7,11 @@ Using simple dual-port memory block with 2 cycle read latency.
 
 ### Block diagram (Data/Address path only)
 
-![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/bd.svg "pop timing diagram")
+![alt text](https://rawgit.com/drom/stack/master/stack2/bd.svg "pop timing diagram")
 
 ### State machine
 
-![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/fsm.svg "pop timing diagram")
+![alt text](https://rawgit.com/drom/stack/master/stack2/fsm.svg "pop timing diagram")
 
 [fsm.dot](fsm.dot)
 
@@ -20,7 +20,7 @@ Using simple dual-port memory block with 2 cycle read latency.
 
 ### Timing diagram for `pop` command sequences.
 
-![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/pop.svg "pop timing diagram")
+![alt text](https://rawgit.com/drom/stack/master/stack2/pop.svg "pop timing diagram")
 
 In the idle state:`A` unit keeps three top elements in the flip-flops: `s0`, `s1`, `s2`.
 
@@ -40,4 +40,4 @@ Any two `nop` commands will move state machine back into sate `A`.
 
 ### Timing diagram for `push/pop` command mixes
 
-![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/push.svg "push/pop timing diagram")
+![alt text](https://rawgit.com/drom/stack/master/stack2/push.svg "push/pop timing diagram")
