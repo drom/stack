@@ -1,0 +1,16 @@
+digraph fsm2 {
+    rankdir = "LR"
+    node [shape = "circle"]
+
+    A -> A [label = "nop"]
+    A -> B [label = "pop"]
+
+    B -> C [label = "nop"]
+    B -> D [label = "pop"]
+
+    D -> D [label = "pop"]
+    D -> C [label = "nop"]
+
+    C -> A [label = "nop"]
+    C -> D [label = "pop"]
+}
