@@ -7,11 +7,11 @@ Using simple dual-port memory block with 2 cycle read latency.
 
 ### Block diagram (Data/Address path only)
 
-![alt text](bd.svg "pop timing diagram")
+![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/bd.svg "pop timing diagram")
 
 ### State machine
 
-![alt text](fsm.svg "pop timing diagram")
+![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/fsm.svg "pop timing diagram")
 
 [fsm.dot](fsm.dot)
 
@@ -35,4 +35,4 @@ Any `nop` after `pop` will move state machine into state `C`.
 Any two `nop` commands will move state machine back into sate `A`.
 
 
-![alt text](pop.svg "pop timing diagram")
+![alt text](https://cdn.rawgit.com/drom/stack/master/stack2/pop.svg "pop timing diagram")
