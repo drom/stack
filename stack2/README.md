@@ -2,7 +2,7 @@
 
 High performance, pipelined stack unit.
 
-Using simple dual-port memory block with 2 cycle read latency.
+Using single-port memory block with 2 cycle read latency.
 
 
 ### Block diagram (Data/Address path only)

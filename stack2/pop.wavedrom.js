@@ -13,7 +13,6 @@
   {name: 're',     wave: '010..1..0..1010...'},
   {name: 'we',     wave: '0.................'},
   {name: 'a',      wave: 'x3x..333x..3x3x...', data: 'a6 a5 a4 a3 a2 a1'},
-  {name: 'ar',     wave: 'x.3x..333x..3x3x..', data: 'a6 a5 a4 a3 a2 a1'},
   {name: 'q',      wave: 'x..3x..333x..3x3x.', data: '6 5 4 3 2 1'},
   {name: 'd',      wave: 'x.................'},
 ]}
