@@ -2,15 +2,17 @@ digraph fsm2 {
     rankdir = "LR"
     node [shape = "circle"]
 
-    A -> A [label = "nop"]
+    A -> A [label = "nop, push"]
     A -> B [label = "pop"]
 
     B -> C [label = "nop"]
     B -> D [label = "pop"]
+    B -> A [label = "push"]
 
-    D -> D [label = "pop"]
     D -> C [label = "nop"]
+    D -> D [label = "pop"]
+    D -> A [label = "push"]
 
-    C -> A [label = "nop"]
+    C -> A [label = "nop, push"]
     C -> D [label = "pop"]
 }
