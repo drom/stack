@@ -72,13 +72,13 @@ logic rden, wren;
 Memory instance:
 
 ```verilog
-mem umem (
+mem2 umem (
     .clock   (clk),
     .rden    (rden),
     .wren    (wren),
-	.address (sp),
-	.data    (s0),
-	.q       (q)
+    .address (sp),
+    .data    (s0),
+    .q       (q)
 );
 ```
 

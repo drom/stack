@@ -1,4 +1,4 @@
-module mem (address, clock, data, rden, wren, q);
+module mem2 (address, clock, data, rden, wren, q);
 
 input [7:0] address;
 input clock;

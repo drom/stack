@@ -23,13 +23,13 @@ logic s1_en, s1_sel0, s1_sel1;
 logic s2_en, s2_sel0;
 logic rden, wren;
 
-mem umem (
+mem2 umem (
     .clock   (clk),
     .rden    (rden),
     .wren    (wren),
-	.address (sp),
-	.data    (s0),
-	.q       (q)
+    .address (sp),
+    .data    (s0),
+    .q       (q)
 );
 
 always_ff @(posedge clk or negedge reset_n)
