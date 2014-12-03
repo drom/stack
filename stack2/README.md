@@ -19,21 +19,21 @@ Clock and async reset
 Data / Address interface
 
 ```verilog
-    input        [AW-1:0] spin,
+    // input        [AW-1:0] spin,
     input        [DW-1:0] in,
     output logic [DW-1:0] s0,
 ```
 
 Stack unit can perform the following commands.
 
-| cmd         | value | stack effect
-|-------------|-------|--------------
-| nop         | 000   | --
-| drop        | 001   | a --
-| dup         | 010   | a -- a a
-| update      | 100   | a -- b
-| drop update | 101   | a b -- c
-| dup update  | 110   | -- a
+| cmd      | value | stack effect
+|----------|-------|--------------
+| nop      | 000   | --
+| drop     | 001   | a --
+| dup      | 010   | a -- a a
+| up       | 100   | a -- b
+| drop-up  | 101   | a b -- c
+| dup-up   | 110   | -- a
 
 ```verilog
     input [2:0] cmd
@@ -46,30 +46,27 @@ Data and address path.
 
 ![alt text](https://rawgit.com/drom/stack/master/stack2/bd.svg "pop timing diagram")
 
-Flip-flops:
+#### Flip-flops:
 
 ```verilog
 logic [DW-1:0] s1, s2;
-logic [AW-1:0] sp, spr, spw;
+logic [AW-1:0] spr, spw;
 ```
 
-Data/Address signals:
+#### Data/Address signals:
 
 ```verilog
 logic [DW-1:0] q;
-logic [AW-1:0] a;
+logic [AW-1:0] sp;
 ```
 
-Control signal:
+#### Control signal:
 
 ```verilog
-logic s0_en, s0_sel0, s0_sel1;
-logic s1_en, s1_sel0, s1_sel1;
-logic s2_en, s2_sel0;
 logic rden, wren;
 ```
 
-Memory instance:
+#### Memory instance:
 
 ```verilog
 mem2 umem (
@@ -77,72 +74,9 @@ mem2 umem (
     .rden    (rden),
     .wren    (wren),
     .address (sp),
-    .data    (s0),
+    .data    (s2),
     .q       (q)
 );
-```
-
-s0 register:
-
-```verilog
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n)
-        s0 <= {DW{1'b0}};
-    else
-        if (s0_en)
-            s0 <=
-                s0_sel0 ? in :
-                s0_sel1 ? s1 :
-                q;
-```
-
-s1 register:
-
-```verilog
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n)
-        s1 <= {DW{1'b0}};
-    else
-        if (s1_en)
-            s1 <=
-                s1_sel0 ? s0 :
-                s1_sel1 ? s2 :
-                q;
-```
-
-s2 register:
-
-```verilog
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n)
-        s2 <= {DW{1'b0}};
-    else
-        if (s2_en)
-            s2 <=
-                s2_sel0 ? s1 :
-                q;
-```
-
-Stack pointer logic:
-
-```verilog
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n) begin
-        spr <= {AW{1'b0}};
-        spw <= {AW{1'b0}};
-    end else begin
-        if (cmd[0]) begin
-            spr <= spr - {{AW-1{1'b0}}, 1'b1};
-            spw <= spr;
-        end
-        if (cmd[1]) begin
-            spr <= spw;
-            spw <= spw + {{AW-1{1'b0}}, 1'b1};
-        end
-    end
-
-always_comb
-    sp = cmd[0] ? spr : spw;
 ```
 
 ### State machine
@@ -157,7 +91,7 @@ always_comb
 logic [3:0] state, state_nxt;
 
 always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n) state <= {4'h1};
+    if (~reset_n) state <= 4'h1;
     else          state <= state_nxt;
 
 always_comb
@@ -183,46 +117,89 @@ always_comb
     endcase
 ```
 
-Control signals:
+### Data-path and control signals.
 
-```verilog
-always_comb begin
-```
+#### s0 register
 
-Register `s0` takes value from `in` port for `update` commands.
+`s0` takes value from `in` port for any `up` command; it will take new value from `s1` or `mem-q` for every `drop` command.
 
 Every `pop` command will change value
 
 ```verilog
-    s0_en   = cmd[2] | cmd[0]; // update or pop
-    s0_sel0 = cmd[2]; // in
-    s0_sel1 = cmd[0]; // s1  ???
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n)
+        s0 <= {DW{1'b0}};
+    else
+        if (cmd[2] | cmd[0]) // up, drop
+            s0 <=
+                cmd[2]   ? in : // up
+                state[3] ? q  : // drop
+                s1;
+
 ```
 
-Unit updates register `s1` for every `push` command or in state `D`.
+#### s1 register
+
+`s1` will take for every `push` command or in state `D`.
 
 ```verilog
-    s1_en   = cmd[1] | state[3];
-    s1_sel0 = cmd[1];    // s0
-    s1_sel1 = ~state[3]; // s2
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n)
+        s1 <= {DW{1'b0}};
+    else
+        if (cmd[0] | cmd[1] | state[3]) // pop, push,...
+            s1 <=
+                cmd[0] ? s2 : // drop
+                cmd[1] ? s0 : // dup
+                q;
 ```
+
+#### s2 register
 
 Unit updates register `s2` for every `push` command or in state `C`.
 
 ```verilog
-    s2_en   = cmd[1] | state[2];
-    s2_sel0 = cmd[1]; // s1
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n)
+        s2 <= {DW{1'b0}};
+    else
+        if (cmd[1] | state[2])
+            s2 <=
+                cmd[1] ? s1 :
+                q;
 ```
+
+#### Stack pointer logic
+
+```verilog
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n) begin
+        spr <= {AW{1'b0}};
+        spw <= {AW{1'b0}};
+    end else begin
+        if (cmd[0]) begin
+            spr <= spr - {{AW-1{1'b0}}, 1'b1};
+            spw <= spr;
+        end
+        if (cmd[1]) begin
+            spr <= spw;
+            spw <= spw + {{AW-1{1'b0}}, 1'b1};
+        end
+    end
+
+always_comb
+    sp = cmd[0] ? spr : spw;
+```
+
+#### Memory control signals
 
 Unit initiate `read` transaction for every `pop` command,
 and `write` transaction `push` commands not after `pop` commands.
 
 ```verilog
+always_comb begin
     rden = cmd[0];
     wren = cmd[1] & state[0];
-```
-
-```verilog
 end
 ```
 

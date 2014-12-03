@@ -5,7 +5,7 @@ module stack2 #(
 
     input clk, reset_n,
 
-    input        [AW-1:0] spin,
+    // input        [AW-1:0] spin,
     input        [DW-1:0] in,
     output logic [DW-1:0] s0,
 
@@ -13,14 +13,11 @@ module stack2 #(
 );
 
 logic [DW-1:0] s1, s2;
-logic [AW-1:0] sp, spr, spw;
+logic [AW-1:0] spr, spw;
 
 logic [DW-1:0] q;
-logic [AW-1:0] a;
+logic [AW-1:0] sp;
 
-logic s0_en, s0_sel0, s0_sel1;
-logic s1_en, s1_sel0, s1_sel1;
-logic s2_en, s2_sel0;
 logic rden, wren;
 
 mem2 umem (
@@ -28,61 +25,14 @@ mem2 umem (
     .rden    (rden),
     .wren    (wren),
     .address (sp),
-    .data    (s0),
+    .data    (s2),
     .q       (q)
 );
-
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n)
-        s0 <= {DW{1'b0}};
-    else
-        if (s0_en)
-            s0 <=
-                s0_sel0 ? in :
-                s0_sel1 ? s1 :
-                q;
-
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n)
-        s1 <= {DW{1'b0}};
-    else
-        if (s1_en)
-            s1 <=
-                s1_sel0 ? s0 :
-                s1_sel1 ? s2 :
-                q;
-
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n)
-        s2 <= {DW{1'b0}};
-    else
-        if (s2_en)
-            s2 <=
-                s2_sel0 ? s1 :
-                q;
-
-always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n) begin
-        spr <= {AW{1'b0}};
-        spw <= {AW{1'b0}};
-    end else begin
-        if (cmd[0]) begin
-            spr <= spr - {{AW-1{1'b0}}, 1'b1};
-            spw <= spr;
-        end
-        if (cmd[1]) begin
-            spr <= spw;
-            spw <= spw + {{AW-1{1'b0}}, 1'b1};
-        end
-    end
-
-always_comb
-    sp = cmd[0] ? spr : spw;
 
 logic [3:0] state, state_nxt;
 
 always_ff @(posedge clk or negedge reset_n)
-    if (~reset_n) state <= {4'h1};
+    if (~reset_n) state <= 4'h1;
     else          state <= state_nxt;
 
 always_comb
@@ -107,22 +57,57 @@ always_comb
         default      state_nxt = 4'bxxxx;
     endcase
 
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n)
+        s0 <= {DW{1'b0}};
+    else
+        if (cmd[2] | cmd[0]) // up, drop
+            s0 <=
+                cmd[2]   ? in : // up
+                state[3] ? q  : // drop
+                s1;
+
+
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n)
+        s1 <= {DW{1'b0}};
+    else
+        if (cmd[0] | cmd[1] | state[3]) // pop, push,...
+            s1 <=
+                cmd[0] ? s2 : // drop
+                cmd[1] ? s0 : // dup
+                q;
+
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n)
+        s2 <= {DW{1'b0}};
+    else
+        if (cmd[1] | state[2])
+            s2 <=
+                cmd[1] ? s1 :
+                q;
+
+always_ff @(posedge clk or negedge reset_n)
+    if (~reset_n) begin
+        spr <= {AW{1'b0}};
+        spw <= {AW{1'b0}};
+    end else begin
+        if (cmd[0]) begin
+            spr <= spr - {{AW-1{1'b0}}, 1'b1};
+            spw <= spr;
+        end
+        if (cmd[1]) begin
+            spr <= spw;
+            spw <= spw + {{AW-1{1'b0}}, 1'b1};
+        end
+    end
+
+always_comb
+    sp = cmd[0] ? spr : spw;
+
 always_comb begin
-
-    s0_en   = cmd[2] | cmd[0]; // update or pop
-    s0_sel0 = cmd[2]; // in
-    s0_sel1 = cmd[0]; // s1  ???
-
-    s1_en   = cmd[1] | state[3];
-    s1_sel0 = cmd[1];    // s0
-    s1_sel1 = ~state[3]; // s2
-
-    s2_en   = cmd[1] | state[2];
-    s2_sel0 = cmd[1]; // s1
-
     rden = cmd[0];
     wren = cmd[1] & state[0];
-
 end
 
 endmodule
