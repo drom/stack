@@ -12,23 +12,16 @@ function list(val) {
 }
 
 function extract (src) {
-    var ret, lines, state;
+    var ret, lines;
     lines = src.split('\n');
-    state = 0;
     ret = [];
     lines.forEach(function (line) {
-        var tag = (line.slice(0, 3) === '```');
-        if (state === 0) {
-            if (tag) {
-                state = 1;
-            }
+        if (line.slice(0, 4) === '    ') {
+            ret.push(line.slice(4));
+        } else if (line === '') {
+            ret.push('');
         } else {
-            if (tag) {
-                state = 0;
-                ret.push('');
-            } else {
-                ret.push(line);
-            }
+            ret.push('// ' + line);
         }
     });
     return ret.join('\n');

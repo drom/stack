@@ -5,7 +5,7 @@ VERILATOR_FLAGS = -Wall --cc --trace stack2.sv ../lib/mem2.v --exe tb.cpp
 default: prep verilate compile run
 
 prep:
-	../bin/prep.js -i README.md > stack2.sv
+	../bin/prep.js -i stack2.systemverilog.md > stack2.sv
 
 verilate:
 	$(VERILATOR_ROOT)/bin/verilator $(VERILATOR_FLAGS)
